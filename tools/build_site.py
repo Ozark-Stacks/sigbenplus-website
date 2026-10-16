@@ -345,7 +345,18 @@ TEAM = [
     ("paige-alfonso.jpg", "Paige Alfonso", "Senior Account Manager", None),
     ("gaby-centeno.jpg", "Gaby Centeno", "Account Manager", None),
     ("rhonda-perry.jpg", "Rhonda Perry", "Account Manager", None),
+    ("dan-johnson.jpg", "Dan Johnson", "Chief Compliance Officer", None),
 ]
+
+
+def people_list() -> str:
+    """Compact portrait list for the contact page, account managers first."""
+    order = [1, 2, 3, 0, 4]  # Paige, Gaby, Rhonda, Brian, Dan
+    rows = []
+    for i in order:
+        img, name, role, _ = TEAM[i]
+        rows.append('          <li><img src="/assets/img/team/%s-400.jpg" alt="" width="52" height="52" loading="lazy"><div><strong>%s</strong><span>%s</span></div></li>' % (img[:-4], name, role))
+    return "\n".join(rows)
 
 
 def team_list() -> str:
@@ -810,10 +821,7 @@ CONTACT_BODY = f"""<section class="hero-band hero-band--contact">
       <div>
         <h2>Who you'll hear from</h2>
         <ul class="people">
-          <li><img src="/assets/img/team/paige-alfonso-400.jpg" alt="" width="52" height="52" loading="lazy"><div><strong>Paige Alfonso</strong><span>Senior Account Manager</span></div></li>
-          <li><img src="/assets/img/team/gaby-centeno-400.jpg" alt="" width="52" height="52" loading="lazy"><div><strong>Gaby Centeno</strong><span>Account Manager</span></div></li>
-          <li><img src="/assets/img/team/rhonda-perry-400.jpg" alt="" width="52" height="52" loading="lazy"><div><strong>Rhonda Perry</strong><span>Account Manager</span></div></li>
-          <li><img src="/assets/img/team/brian-logan-400.jpg" alt="" width="52" height="52" loading="lazy"><div><strong>Brian Logan</strong><span>Partner</span></div></li>
+{people_list()}
         </ul>
         <p>A small team in Kennesaw with over 45 years of combined HR experience. The person who answers is the person who handles your account.</p>
       </div>
@@ -864,7 +872,7 @@ PAGES = [
         "path": "/about/", "file": "about/index.html",
         "title": "SigBenPlus | About Signature Benefits Plus & Our Team",
         "og_title": "Meet the Signature Benefits Plus team",
-        "description": "Signature Benefits Plus is a Kennesaw, Georgia benefits broker and fractional HR firm with over 45 years of combined HR experience. Meet Brian Logan, Paige Alfonso, Gaby Centeno and Rhonda Perry.",
+        "description": "Signature Benefits Plus is a Kennesaw, Georgia benefits broker and fractional HR firm with over 45 years of combined HR experience. Meet Brian Logan, Paige Alfonso, Gaby Centeno, Rhonda Perry and Dan Johnson.",
         "ld": [about_bc_ld] + [
             dict({"@context": "https://schema.org", "@type": "Person", "name": n, "jobTitle": r, "worksFor": {"@id": DOMAIN + "/#organization"}, "image": DOMAIN + "/assets/img/team/" + i}, **({"sameAs": l} if l else {}))
             for i, n, r, l in TEAM
