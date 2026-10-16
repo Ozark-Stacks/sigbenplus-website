@@ -231,21 +231,17 @@ strong { font-weight: 600; }
 .dial__seg { fill: none; stroke: rgba(255, 255, 255, .14); stroke-width: 26; cursor: pointer; transition: stroke .15s, stroke-width .15s; }
 .dial__seg:hover { stroke: rgba(255, 255, 255, .34); stroke-width: 30; }
 .dial:not(.is-ready) .dial__seg { animation: fade-in .35s ease-out both; animation-delay: calc(var(--i, 0) * 125ms + 120ms); }
-.dial__hl { transform-box: view-box; transform-origin: 260px 260px; transform: rotate(var(--rot, 0deg)); transition: transform .95s cubic-bezier(.3, 1.3, .4, 1); pointer-events: none; }
+.dial__hl { pointer-events: none; } /* rotated via its SVG transform attribute by main.js */
 .dial__arc { fill: none; stroke: var(--lime); stroke-width: 26; stroke-dasharray: 470; stroke-dashoffset: 0; }
 .dial:not(.is-ready) .dial__arc { animation: dial-draw 1.1s cubic-bezier(.2, .8, .2, 1) 1.45s both; }
 @keyframes dial-draw { from { stroke-dashoffset: 470; } to { stroke-dashoffset: 0; } }
 .dial__renew { fill: none; stroke: var(--white); stroke-width: 26; }
 .dial:not(.is-ready) .dial__renew { animation: fade-in .4s ease-out 2.35s both; }
 .dial__tick { stroke: var(--navy-deep); stroke-width: 3; }
-.dial__day { transform-box: view-box; transform-origin: 260px 260px; transform: rotate(var(--rel)); }
-.dial__day text {
-  fill: var(--lime); font: 700 13px var(--font-body); text-anchor: middle; dominant-baseline: middle; letter-spacing: .03em;
-  transform-box: fill-box; transform-origin: center;
-  transform: rotate(calc(-1 * (var(--rot, 0deg) + var(--rel))));
-  transition: transform .95s cubic-bezier(.3, 1.3, .4, 1);
-}
-.dial:not(.is-ready) .dial__day text { animation: fade-in .4s ease-out 2.45s both; }
+.dial__day { fill: var(--lime); font: 700 13px var(--font-body); text-anchor: middle; dominant-baseline: middle; letter-spacing: .03em; pointer-events: none; }
+.dial:not(.is-ready) .dial__day { animation: fade-in .4s ease-out 2.45s both; }
+.dial.is-turning .dial__day { animation: day-swap .9s ease-out; }
+@keyframes day-swap { 0%, 55% { opacity: 0; } 100% { opacity: 1; } }
 .dial__start { fill: var(--navy-deep); stroke: var(--lime); stroke-width: 4; transform-box: fill-box; transform-origin: center; }
 .dial:not(.is-ready) .dial__start { animation: dot-pop .6s cubic-bezier(.3, 1.6, .4, 1) 1.4s both; }
 .dial.is-turning .dial__start { animation: dot-pop .6s cubic-bezier(.3, 1.6, .4, 1); }

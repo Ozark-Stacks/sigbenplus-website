@@ -36,8 +36,43 @@
   var dialHl = d.getElementById("dial-hl");
   var dialMonth = d.getElementById("dial-month");
   var dialSub = d.getElementById("dial-sub");
-  var rot = 0;            // cumulative rotation so the arc always takes the short way round
+  var dialDays = d.querySelectorAll(".dial__day");
+  var rot = 0;            // target rotation, cumulative so the arc always takes the short way round
+  var shownRot = 0;       // rotation currently drawn
+  var raf = null;
   var turnTimer = null;
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function setRotation(deg) {
+    shownRot = deg;
+    dialHl.setAttribute("transform", "rotate(" + deg.toFixed(2) + " 260 260)");
+  }
+  function easeOutBack(t) { var c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+  var settle = null;
+  function animateTo(target) {
+    if (raf) cancelAnimationFrame(raf);
+    clearTimeout(settle);
+    var from = shownRot, begin = null, dur = 900;
+    function step(ts) {
+      if (begin === null) begin = ts;
+      var t = Math.min(1, (ts - begin) / dur);
+      setRotation(from + (target - from) * easeOutBack(t));
+      raf = t < 1 ? requestAnimationFrame(step) : null;
+    }
+    raf = requestAnimationFrame(step);
+    /* If animation frames are throttled (background tab), still land on the final angle. */
+    settle = setTimeout(function () {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      setRotation(target);
+    }, dur + 120);
+  }
+  function placeDays(i) {
+    for (var k = 0; k < dialDays.length; k++) {
+      var rel = parseInt(dialDays[k].getAttribute("data-rel"), 10);
+      var a = (i * 30 + rel) * Math.PI / 180;
+      dialDays[k].setAttribute("x", (260 + 174 * Math.sin(a)).toFixed(1));
+      dialDays[k].setAttribute("y", (260 - 174 * Math.cos(a)).toFixed(1));
+    }
+  }
   function updatePlanner(animate) {
     var i = parseInt(sel.value, 10);
     if (isNaN(i)) return;
@@ -52,8 +87,9 @@
       if (delta > 180) delta -= 360;
       if (delta < -180) delta += 360;
       rot += delta;
-      dialHl.style.setProperty("--rot", rot + "deg");
+      if (animate && !reduceMotion) animateTo(rot); else setRotation(rot);
     }
+    placeDays(i);
     if (dialMonth) dialMonth.textContent = MONTHS[i];
     if (dialSub) dialSub.textContent = "We start in " + start;
     if (animate && dial) {

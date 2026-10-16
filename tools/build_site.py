@@ -115,9 +115,11 @@ def dial_svg() -> str:
         x0, y0 = _pt(cx, cy, r - 15, a)
         x1, y1 = _pt(cx, cy, r + 15, a)
         ticks.append('<line class="dial__tick" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (x0, y0, x1, y1))
-    # "90 days / 60 days / 30 days" sit just inside the ring; CSS counter-rotates them so they stay upright
+    # "90 / 60 / 30 days" sit just inside the ring. They are placed with plain x/y (and
+    # re-placed by main.js on month change) so no browser has to agree on a transform pivot.
+    rd = r - 44
     days = "".join(
-        '<g class="dial__day" style="--rel:%ddeg"><text x="%d" y="%d">%s</text></g>' % (rel, cx, cy - (r - 44), lbl)
+        '<text class="dial__day" data-rel="%d" x="%.1f" y="%.1f">%s</text>' % ((rel,) + _pt(cx, cy, rd, rel) + (lbl,))
         for rel, lbl in ((-90, "90 days"), (-60, "60 days"), (-30, "30 days"))
     )
     sx, sy = _pt(cx, cy, r, -90 - half)
@@ -125,14 +127,14 @@ def dial_svg() -> str:
         '<svg class="dial__svg" viewBox="0 0 520 520" aria-hidden="true" focusable="false">'
         '<circle class="dial__bg" cx="%d" cy="%d" r="%d"/>' % (cx, cy, r)
         + '<g class="dial__segs">' + "".join(segs) + "</g>"
-        + '<g class="dial__hl" id="dial-hl">'
+        + '<g class="dial__hl" id="dial-hl" transform="rotate(0 %d %d)">' % (cx, cy)
         + '<path class="dial__arc" d="%s"/>' % _arc(cx, cy, r, -90 - half, half)
         + '<path class="dial__renew" d="%s"/>' % _arc(cx, cy, r, -half, half)
         + "".join(ticks)
-        + days
         + '<circle class="dial__ping" cx="%.1f" cy="%.1f" r="9"/>' % (sx, sy)
         + '<circle class="dial__start" cx="%.1f" cy="%.1f" r="9"/>' % (sx, sy)
         + "</g>"
+        + '<g class="dial__days">' + days + "</g>"
         + '<g class="dial__labels">' + "".join(labels) + "</g>"
         + "</svg>"
     )
