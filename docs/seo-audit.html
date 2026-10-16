@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SigBenPlus SEO Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a single reading column; findings as scannable rows; two small score charts.
+   Brand-adjacent palette (navy + lime) so the report reads as part of the rebuild work. */
+:root {
+  --bg: #FAFBF8; --fg: #15202B; --muted: #5A6772; --line: #DCE3DD; --card: #FFFFFF; --soft: #EEF3EC;
+  --accent: #123F63; --accent-2: #5E8A00;
+  --s-cur: #2E6FB3; --s-new: #5E8A00;            /* chart series: current site / rebuilt site */
+  --sev-crit: #B3261E; --sev-high: #B45309; --sev-med: #8A6A00; --sev-low: #5A6772;
+  --ok: #2E7D32;
+  --display: "Newsreader", Georgia, "Times New Roman", serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1A24; --fg: #E6ECF1; --muted: #9AA8B4; --line: #27343F; --card: #16232E; --soft: #1B2935;
+  --accent: #8DB8EC; --accent-2: #9CCB4A; --s-cur: #4F8CD8; --s-new: #6FA62A;
+  --sev-crit: #F28B82; --sev-high: #F5A35C; --sev-med: #E6C04A; --sev-low: #9AA8B4; --ok: #7BC67E; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0F1A24; --fg: #E6ECF1; --muted: #9AA8B4; --line: #27343F; --card: #16232E; --soft: #1B2935;
+  --accent: #8DB8EC; --accent-2: #9CCB4A; --s-cur: #4F8CD8; --s-new: #6FA62A;
+  --sev-crit: #F28B82; --sev-high: #F5A35C; --sev-med: #E6C04A; --sev-low: #9AA8B4; --ok: #7BC67E; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 1.03rem/1.6 var(--body); }
+.page { max-width: 980px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 40px); padding-block: 2.5rem 4rem; }
+h1, h2, h3 { font-family: var(--display); font-weight: 500; line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 .5em; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 1.4rem + 2.6vw, 3rem); }
+h2 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+h3 { font-size: 1.3rem; margin-top: 1.75rem; }
+p { margin: 0 0 1em; max-width: 68ch; }
+a { color: var(--accent); }
+ul, ol { padding-left: 1.2rem; max-width: 68ch; } li { margin-bottom: .4em; }
+.meta { color: var(--muted); font-size: .92rem; display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; margin-bottom: 2rem; }
+.meta b { color: var(--fg); font-weight: 600; }
+.verdict { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent-2); padding: 1.25rem 1.5rem; margin: 0 0 1.5rem; }
+.verdict p:last-child { margin-bottom: 0; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.kv div { background: var(--card); border: 1px solid var(--line); padding: .9rem 1rem; }
+.kv dt { font-size: .82rem; color: var(--muted); font-weight: 600; margin-bottom: .2rem; }
+.kv dd { margin: 0; font-family: var(--display); font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kv dd small { font-family: var(--body); font-size: .85rem; color: var(--muted); display: block; margin-top: .25rem; }
+
+/* findings */
+.findings { display: grid; gap: .6rem; margin: 1.25rem 0; }
+.finding { display: grid; grid-template-columns: 6.5rem 1fr; gap: .25rem 1rem; background: var(--card); border: 1px solid var(--line); padding: .9rem 1rem; }
+.sev { font-size: .74rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: .2rem .5rem; border-radius: 3px; align-self: start; justify-self: start; border: 1px solid currentColor; }
+.sev.crit { color: var(--sev-crit); } .sev.high { color: var(--sev-high); } .sev.med { color: var(--sev-med); } .sev.low { color: var(--sev-low); }
+.finding h4 { margin: 0 0 .25rem; font-size: 1.02rem; font-weight: 600; }
+.finding p { margin: 0 0 .35rem; font-size: .95rem; color: var(--muted); max-width: none; }
+.finding .fix { color: var(--fg); } .finding .fix::before { content: "Fixed in rebuild: "; font-weight: 600; color: var(--ok); }
+.finding .todo::before { content: "Client action: "; font-weight: 600; color: var(--sev-high); }
+.finding code { font-size: .88em; background: var(--soft); padding: .05em .35em; border-radius: 3px; }
+@media (max-width: 560px) { .finding { grid-template-columns: 1fr; } }
+
+/* charts */
+.chart-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin: 1rem 0 .5rem; }
+.chart { background: var(--card); border: 1px solid var(--line); padding: 1rem 1.1rem 1.1rem; }
+.chart h3 { margin: 0 0 .75rem; font-size: 1.1rem; font-family: var(--body); font-weight: 600; }
+.legend { display: flex; gap: 1.25rem; font-size: .85rem; color: var(--muted); margin: .25rem 0 1rem; }
+.legend span::before { content: ""; display: inline-block; width: .8em; height: .8em; border-radius: 2px; margin-right: .4em; vertical-align: -.05em; }
+.legend .cur::before { background: var(--s-cur); } .legend .new::before { background: var(--s-new); }
+table.scores { width: 100%; border-collapse: collapse; font-size: .9rem; }
+table.scores th { text-align: left; font-weight: 600; padding: .35rem 0; width: 8.5rem; vertical-align: top; }
+table.scores td { padding: .35rem 0; }
+.bars { display: grid; gap: 3px; }
+.bar { display: grid; grid-template-columns: 1fr 2.6rem; align-items: center; gap: .5rem; }
+.bar i { display: block; height: 10px; border-radius: 0 3px 3px 0; width: calc(var(--v) * 1%); min-width: 2px; }
+.bar.cur i { background: var(--s-cur); } .bar.new i { background: var(--s-new); }
+.bar b { font-weight: 600; font-variant-numeric: tabular-nums; font-size: .85rem; }
+.weight { margin: 1rem 0 0; }
+.weight .row { display: grid; grid-template-columns: 7rem 1fr; gap: .75rem; align-items: center; margin-bottom: .6rem; font-size: .9rem; }
+.weight .track { position: relative; height: 18px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.weight .seg { position: absolute; top: 0; bottom: 0; }
+.weight .video { left: 0; width: 92%; background: var(--s-cur); }
+.weight .rest { left: calc(92% + 2px); width: 5.3%; background: var(--s-cur); opacity: .45; }
+.weight .after { left: 0; width: 2.2%; background: var(--s-new); min-width: 4px; }
+.weight small { color: var(--muted); display: block; }
+.note { font-size: .88rem; color: var(--muted); }
+
+/* screenshots */
+.shots { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 1rem 0; }
+.shots figure { margin: 0; min-width: 0; }
+.shots img { width: 100%; height: auto; border: 1px solid var(--line); display: block; background: var(--soft); }
+.shots figcaption { font-size: .85rem; color: var(--muted); margin-top: .4rem; }
+.shots.mobile { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
+details { border: 1px solid var(--line); background: var(--card); padding: .6rem 1rem; margin: 1rem 0; }
+summary { cursor: pointer; font-weight: 600; }
+details .shots { align-items: start; }
+@media (max-width: 560px) { .shots { grid-template-columns: 1fr; } .shots.mobile { grid-template-columns: 1fr 1fr; } }
+
+table.plain { width: 100%; border-collapse: collapse; font-size: .92rem; margin: 1rem 0; }
+table.plain th, table.plain td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.plain th { font-weight: 600; background: var(--soft); }
+.scroll { overflow-x: auto; }
+.check li { margin-bottom: .6em; }
+footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+</style>
+
+</head>
+<body>
+<div class="page">
+  <h1>Signature Benefits Plus: SEO and site audit</h1>
+  <div class="meta">
+    <span><b>Site</b> www.sigbenplus.com</span>
+    <span><b>Audited</b> October 14, 2026</span>
+    <span><b>Platform</b> Carrd (single page)</span>
+    <span><b>Last content change</b> July 15, 2024</span>
+  </div>
+
+  <div class="verdict">
+    <p><strong>Verdict: technically tidy, strategically invisible.</strong> The current page passes Google's basic technical checklist (Lighthouse SEO 100), which is why an automated scanner would call it fine. It is not fine. It is one page with a ten-character title tag, no city or service keywords, no address, no structured data, no analytics, and an 8.65 MB autoplaying video as the first thing a phone downloads. A business searching for a benefits broker or fractional HR in Kennesaw or metro Atlanta has no realistic way to find it.</p>
+    <p>The rebuild delivered alongside this report addresses every item marked "Fixed in rebuild" below. Items marked "Client action" need the business owner: confirming the street address, claiming the Google Business Profile, and connecting Search Console, analytics and a form endpoint.</p>
+  </div>
+
+  <dl class="kv">
+    <div><dt>Indexable pages</dt><dd>1<small>Home only. No service, team or contact URLs exist.</small></dd></div>
+    <div><dt>Title tag</dt><dd>"SigBenPlus"<small>Brand abbreviation nobody searches for.</small></dd></div>
+    <div><dt>Page weight (mobile)</dt><dd>9.4 MB<small>8.65 MB is one background video.</small></dd></div>
+    <div><dt>Words of content</dt><dd>498<small>Across all services, team and contact.</small></dd></div>
+    <div><dt>Third-party mentions found</dt><dd>0<small>No directory, review or press results for the brand.</small></dd></div>
+    <div><dt>Address on site</dt><dd>None<small>No street address, city or hours anywhere.</small></dd></div>
+  </dl>
+
+  <h2>Search visibility</h2>
+  <p>Searches for the exact brand name returned the site only when the query also contained a team member's name or the words Kennesaw or Georgia. A plain search for "Signature Benefits Plus" surfaced unrelated companies first. There is no Google Business Profile for Signature Benefits Plus; the only local listings found belong to the sister company Signature Benefits at the same phone number, and those listings disagree with each other about the suite number (110, 111 and 141 at 1301 Shiloh Rd NW). That inconsistency, called a NAP mismatch, is exactly what suppresses a local business in map results.</p>
+  <div class="findings">
+    <div class="finding"><span class="sev crit">Critical</span><div><h4>No local search presence</h4><p>No Google Business Profile, no address on the page, no LocalBusiness structured data, and no mention of Kennesaw, Georgia or Atlanta anywhere in the HTML.</p><p class="fix">Address and phone in the footer and contact page, InsuranceAgency and ProfessionalService schema with the postal address and service area on every page, city and state in titles and copy.</p><p class="todo">Claim the Google Business Profile as "Signature Benefits Plus" and align the suite number everywhere.</p></div></div>
+    <div class="finding"><span class="sev crit">Critical</span><div><h4>One page for every search intent</h4><p>"Group benefits broker," "fractional HR," "HR compliance audit" and the team all live at a single URL with anchors (#one, #two, #three). Google ranks pages, not anchors, so the site can rank for at most one topic.</p><p class="fix">Five pages, each with its own title, description, H1, breadcrumbs and schema: Home, Group Benefits, Fractional HR, About, Contact.</p></div></div>
+    <div class="finding"><span class="sev high">High</span><div><h4>Title tag is "SigBenPlus"</h4><p>Ten characters, no business name in full, no service, no location. The Open Graph title is the same. The meta description, "A comprehensive HR company for Group Benefits and Fractional HR," is duplicated twice in the head and names no place.</p><p class="fix">Example: <code>Signature Benefits Plus | Group Benefits &amp; Fractional HR in Kennesaw, GA</code>, with unique titles and descriptions on each page.</p></div></div>
+    <div class="finding"><span class="sev high">High</span><div><h4>No structured data</h4><p>Zero JSON-LD blocks. Google has no machine-readable business name, address, phone, logo, team or FAQ to build rich results from.</p><p class="fix">Organization, WebSite, Service, BreadcrumbList, FAQPage, Person and ContactPage schema generated per page.</p></div></div>
+    <div class="finding"><span class="sev high">High</span><div><h4>Thin, undifferentiated content</h4><p>498 words total. The eight service names (onboarding, drug testing, handbooks, and so on) appear once each as a single word in an image-style menu with no explanation. The sitemap claims the page changes daily; it has not changed since July 2024.</p><p class="fix">Each service gets a plain-English description, each offering page gets an FAQ, and the renewal process is explained as a timeline. Sitemap uses real dates and monthly frequency.</p></div></div>
+    <div class="finding"><span class="sev med">Medium</span><div><h4>No measurement</h4><p>No Google Analytics, Tag Manager, Clarity or any analytics script. No evidence of Search Console verification. Nobody can tell what, if anything, the site produces.</p><p class="todo">Add GA4 (one line in the build script) and verify the domain in Search Console, then submit <code>/sitemap.xml</code>.</p></div></div>
+    <div class="finding"><span class="sev med">Medium</span><div><h4>Image and link signals are weak</h4><p>Two partner logos carry the alt text "Log in". Team photos repeat their visible captions as alt text (Lighthouse flags this as redundant). Images have no width or height attributes. The only outbound links are two login portals, YouTube and one personal LinkedIn profile.</p><p class="fix">Descriptive alt text, explicit dimensions on every image, lazy loading below the fold, and a client-login menu that explains what each portal is for.</p></div></div>
+  </div>
+
+  <h2>Performance</h2>
+  <p>Lighthouse scores for the live site and the rebuilt site. Mobile is the one that matters for ranking. The rebuilt site was measured on a bare local server with no compression or caching, so its numbers are a floor; any normal host will do better.</p>
+  <div class="legend"><span class="cur">Current site</span><span class="new">Rebuilt site</span></div>
+  <div class="chart-wrap">
+    <div class="chart"><h3>Mobile</h3>
+      <table class="scores">
+        <tr><th>Performance</th><td class="bars"><div class="bar cur" style="--v:84"><i></i><b>84</b></div><div class="bar new" style="--v:99"><i></i><b>99</b></div></td></tr>
+        <tr><th>Accessibility</th><td class="bars"><div class="bar cur" style="--v:99"><i></i><b>99</b></div><div class="bar new" style="--v:100"><i></i><b>100</b></div></td></tr>
+        <tr><th>Best practices</th><td class="bars"><div class="bar cur" style="--v:100"><i></i><b>100</b></div><div class="bar new" style="--v:100"><i></i><b>100</b></div></td></tr>
+        <tr><th>SEO checklist</th><td class="bars"><div class="bar cur" style="--v:100"><i></i><b>100</b></div><div class="bar new" style="--v:100"><i></i><b>100</b></div></td></tr>
+      </table>
+    </div>
+    <div class="chart"><h3>Desktop</h3>
+      <table class="scores">
+        <tr><th>Performance</th><td class="bars"><div class="bar cur" style="--v:98"><i></i><b>98</b></div><div class="bar new" style="--v:100"><i></i><b>100</b></div></td></tr>
+        <tr><th>Accessibility</th><td class="bars"><div class="bar cur" style="--v:99"><i></i><b>99</b></div><div class="bar new" style="--v:100"><i></i><b>100</b></div></td></tr>
+        <tr><th>Best practices</th><td class="bars"><div class="bar cur" style="--v:100"><i></i><b>100</b></div><div class="bar new" style="--v:100"><i></i><b>100</b></div></td></tr>
+        <tr><th>SEO checklist</th><td class="bars"><div class="bar cur" style="--v:100"><i></i><b>100</b></div><div class="bar new" style="--v:100"><i></i><b>100</b></div></td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="note">The "SEO" category in Lighthouse checks about a dozen mechanical items (viewport, title present, links crawlable, robots valid). A perfect score there says nothing about whether anyone can find the site.</p>
+
+  <h3>What a phone downloads on the first visit</h3>
+  <div class="weight">
+    <div class="row"><span>Current site</span><div><div class="track"><span class="seg video" title="Background video 8.65 MB"></span><span class="seg rest" title="Images, fonts, HTML 0.5 MB"></span></div><small>9.4 MB over 31 requests. The hero video alone is 8.65 MB, set to autoplay and preload.</small></div></div>
+    <div class="row"><span>Rebuilt site</span><div><div class="track"><span class="seg after" title="0.21 MB"></span></div><small>0.22 MB over 11 requests. No video; the hero is an inline SVG dial, and the one photo is on inner pages only.</small></div></div>
+  </div>
+
+  <div class="scroll">
+  <table class="plain">
+    <tr><th>Mobile metric</th><th>Current</th><th>Rebuilt</th><th>Why it matters</th></tr>
+    <tr><td>Largest Contentful Paint</td><td>4.2 s</td><td>1.6 s</td><td>Google's "good" threshold is 2.5 s. The current LCP element is the video poster; the rebuilt one is the headline text.</td></tr>
+    <tr><td>First Contentful Paint</td><td>1.9 s</td><td>1.6 s</td><td>Measured on a localhost server with no compression, so the rebuilt figure will improve further on a real host.</td></tr>
+    <tr><td>Total Blocking Time</td><td>0 ms</td><td>0 ms</td><td>Neither site runs heavy scripts.</td></tr>
+    <tr><td>Cumulative Layout Shift</td><td>0</td><td>0.05</td><td>Both under Google's 0.1 threshold; the rebuilt site's small shift is the web font swapping into the headline.</td></tr>
+    <tr><td>Total transfer</td><td>9,131 KiB</td><td>219 KiB</td><td>42 times less data. On a cellular connection this is the difference between a bounce and a read.</td></tr>
+    <tr><td>Render-blocking fonts</td><td>764 ms (Inter, Libre Franklin)</td><td>0 ms</td><td>Fonts preload and apply when ready, with system fallbacks in the meantime.</td></tr>
+  </table>
+  </div>
+  <div class="findings">
+    <div class="finding"><span class="sev high">High</span><div><h4>8.65 MB autoplaying hero video</h4><p>Set to <code>autoplay preload="auto" loop</code> and served without a cache header, so it downloads in full on every visit, including over cellular. It is the Largest Contentful Paint element and the main reason mobile performance is 84 instead of high 90s.</p><p class="fix">Removed. The hero is typographic with an interactive renewal planner; the one photo is served as WebP at two sizes.</p></div></div>
+    <div class="finding"><span class="sev med">Medium</span><div><h4>No caching, no HSTS, 271 KB of inline CSS</h4><p><code>cache-control: max-age=0</code> on the document, no Strict-Transport-Security header, and the entire Carrd stylesheet inlined into a 352 KB HTML file (40 KB compressed). The TLS certificate is valid (Let's Encrypt, renews November 2026). The HTTP to HTTPS and non-www to www redirects are correct.</p><p class="fix">17 KB external stylesheet, an <code>.htaccess</code> with long cache lifetimes, compression, HSTS and security headers for Apache hosts; equivalent settings are automatic on Netlify, Cloudflare Pages or Vercel.</p></div></div>
+  </div>
+
+  <h2>Mobile and desktop experience</h2>
+  <p>Both versions of the current page share the same problems: a hero built on a busy video with the logo, headline and a cycling service word fighting for attention; every paragraph of body copy rendered as lime highlighter blocks on dark navy; buttons that are small, outlined, all-caps and low contrast; and a contact section that leads with a stock photo before the form. On a phone the first screen is the video and logo only, and the service list is replaced by a single rotating word, so a visitor can scroll two screens without learning what the company does.</p>
+  <div class="shots">
+    <figure><img src="img/before-desktop-hero.jpg" alt="Current site on desktop: logo and headline over a green-tinted video of an office" width="640" height="420" loading="lazy"><figcaption>Current site, desktop first screen.</figcaption></figure>
+    <figure><img src="img/after-desktop-hero.jpg" alt="Rebuilt site on desktop: white serif headline on navy beside a 12-month renewal dial with a lime arc" width="640" height="420" loading="lazy"><figcaption>Rebuilt site, desktop first screen.</figcaption></figure>
+  </div>
+  <div class="shots mobile">
+    <figure><img src="img/before-mobile-hero.jpg" alt="Current site on a phone: video background with logo and the word Drug Testing" width="360" height="640" loading="lazy"><figcaption>Current site, phone.</figcaption></figure>
+    <figure><img src="img/after-mobile-hero.jpg" alt="Rebuilt site on a phone: headline on navy with the renewal dial below" width="360" height="640" loading="lazy"><figcaption>Rebuilt site, phone.</figcaption></figure>
+  </div>
+  <details><summary>Full-page captures (current and rebuilt, desktop and phone)</summary>
+    <div class="shots">
+      <figure><img src="img/before-desktop.jpg" alt="Full current homepage on desktop" loading="lazy"><figcaption>Current, desktop, full page.</figcaption></figure>
+      <figure><img src="img/after-desktop.jpg" alt="Full rebuilt homepage on desktop" loading="lazy"><figcaption>Rebuilt, desktop, full page.</figcaption></figure>
+    </div>
+    <div class="shots mobile">
+      <figure><img src="img/before-mobile.jpg" alt="Full current homepage on a phone" loading="lazy"><figcaption>Current, phone, full page.</figcaption></figure>
+      <figure><img src="img/after-mobile.jpg" alt="Full rebuilt homepage on a phone" loading="lazy"><figcaption>Rebuilt, phone, full page.</figcaption></figure>
+    </div>
+  </details>
+  <div class="findings">
+    <div class="finding"><span class="sev med">Medium</span><div><h4>Readability</h4><p>Body copy in lime highlight blocks on navy passes an automated contrast check but is tiring to read at paragraph length, and the all-caps outlined buttons at 11 px are below comfortable tap size.</p><p class="fix">Light page, dark navy text, a serif headline face paired with a clean sans, 17 px body text, solid lime buttons with navy text at 46 px tall, and a 16 px minimum side gutter at every width.</p></div></div>
+    <div class="finding"><span class="sev low">Low</span><div><h4>Platform lock-in</h4><p>The page is a Carrd export: the form posts to Carrd, the CSP only allows framing by carrd.com, internal navigation uses <code>javascript:</code> links, and the redirect page is served as ISO-8859-1. None of this blocks indexing, but it means the site cannot be moved or extended without starting over.</p><p class="fix">Plain HTML, CSS and 4 KB of JavaScript with no framework or platform dependency; a build script regenerates pages from one shared layout.</p></div></div>
+  </div>
+
+  <h2>What the rebuild ships</h2>
+  <div class="scroll">
+  <table class="plain">
+    <tr><th>URL</th><th>Title</th><th>Target searches</th></tr>
+    <tr><td>/</td><td>Signature Benefits Plus | Group Benefits &amp; Fractional HR in Kennesaw, GA</td><td>brand name; "benefits broker Kennesaw"</td></tr>
+    <tr><td>/group-benefits/</td><td>Group Employee Benefits Broker in Kennesaw, GA | Signature Benefits Plus</td><td>"group health insurance broker Kennesaw", "employee benefits broker Atlanta"</td></tr>
+    <tr><td>/fractional-hr/</td><td>Fractional HR Services for Small Businesses in Georgia | Signature Benefits Plus</td><td>"fractional HR Georgia", "HR compliance audit Atlanta", "outsourced HR Kennesaw"</td></tr>
+    <tr><td>/about/</td><td>About Signature Benefits Plus | Benefits &amp; HR Team in Kennesaw, GA</td><td>team names; "Signature Benefits Plus reviews"</td></tr>
+    <tr><td>/contact/</td><td>Contact Signature Benefits Plus | Kennesaw, GA | 678-388-1837</td><td>phone number; "Signature Benefits Plus contact"</td></tr>
+  </table>
+  </div>
+  <ul>
+    <li>Unique title, description, canonical, Open Graph card (1200 by 630) and breadcrumbs on every page.</li>
+    <li>Structured data: InsuranceAgency and ProfessionalService organization with address, phone, service area and offer catalog; Service, FAQPage, Person and ContactPage where relevant.</li>
+    <li>An interactive renewal dial as the hero: a 12-month ring where a lime arc marks the 90 days the firm works ahead of your renewal. It turns the site's one real process claim ("we contact you 60 to 90 days prior") into something a visitor can use, and it prefills the contact form.</li>
+    <li>Client logins for Employee Navigator and Zywave kept and explained; existing team photos and logo reused.</li>
+    <li>robots.txt, sitemap.xml, 404 page, Apache config, skip link, keyboard focus states, reduced-motion support, print styles.</li>
+  </ul>
+
+  <h2>Launch checklist for the business</h2>
+  <ol class="check">
+    <li><strong>Confirm the street address and suite.</strong> Listings tied to 678-388-1837 show 1301 Shiloh Rd NW with suites 110, 111 and 141. Pick one, then use it on the site, Google Business Profile, Nextdoor, MapQuest, ZoomInfo and LinkedIn. Add business hours if you want them shown.</li>
+    <li><strong>Claim a Google Business Profile for Signature Benefits Plus</strong> (separate from Signature Benefits), with the website, phone, categories "Insurance agency" and "Human resources consulting," and the team photos. Ask three current clients for reviews.</li>
+    <li><strong>Connect the contact form.</strong> Set the form's endpoint to Formspree, Basin, Netlify Forms or your host's form handler. Until then it opens the visitor's email app with the message prefilled.</li>
+    <li><strong>Verify the domain in Google Search Console</strong> and submit the sitemap. Add Google Analytics 4 or a privacy-light alternative such as Plausible.</li>
+    <li><strong>Create a LinkedIn company page</strong> for Signature Benefits Plus and link it from the site; today the only LinkedIn link is one personal profile.</li>
+    <li><strong>Read the service descriptions and FAQ answers once.</strong> They were written from the current site's copy and standard practice; anything that does not match how you actually work should be changed before launch.</li>
+    <li><strong>Publish something quarterly.</strong> A short note on a compliance deadline or a renewal-season tip, on its own URL, is the cheapest way to earn the long-tail searches this industry lives on.</li>
+  </ol>
+
+  <footer>
+    <p>Method: raw HTML fetch and header inspection of https://www.sigbenplus.com/ (352,304 bytes, last-modified 2024-07-15), robots.txt and sitemap.xml, DNS and TLS checks, Lighthouse 12.6.1 lab runs on October 14, 2026 (mobile and desktop presets) for the live site and for the rebuilt site served locally, rendered screenshots at 1350 px and 412 px, and web searches for the brand, phone number and team. No field data exists in the Chrome UX Report for this domain, and no backlink index was available, so link counts are based on search results only.</p>
+  </footer>
+</div>
+
+</body>
+</html>
